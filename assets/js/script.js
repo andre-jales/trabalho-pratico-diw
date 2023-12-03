@@ -8,9 +8,9 @@ var albuns = [];
 
 function showAlbums(albums) {
     albuns = albums;
-    let containerAlbums = $("#container-albums");
-    let currentRow;
-    for (let i = 0; i < albums.length; i++) {
+    var containerAlbums = $("#container-albums");
+    var currentRow;
+    for (var i = 0; i < albums.length; i++) {
         if (i % 4 === 0) {
             currentRow = $('<div class="row row-cols-1 row-cols-md-4">');
             containerAlbums.append(currentRow);
@@ -33,7 +33,7 @@ function showAlbums(albums) {
 
         if ($('#map').length)
         {
-            let coordenadas = albums[i].localizacao.split(',').map(coord => parseFloat(coord.trim()));
+            var coordenadas = albums[i].localizacao.split(',').map(coord => parseFloat(coord.trim()));
             var marker = new mapboxgl.Marker()
                 .setLngLat([coordenadas[0], coordenadas[1]])
                 .setPopup(new mapboxgl.Popup().setHTML(`<p><a href="album.html?id=${albums[i].id}">${albums[i].titulo}</a></p>`))
@@ -43,11 +43,11 @@ function showAlbums(albums) {
 }
 
 function showItems(items, albumID) {
-    let filteredItems = items.filter(item => item.album == albumID);
+    var filteredItems = items.filter(item => item.album == albumID);
     const containerItems = $('.container-items');
     const carouselInner = $('.carousel-inner');
-    let currentRow;
-    for (let i = 0; i < filteredItems.length; i++) {
+    var currentRow;
+    for (var i = 0; i < filteredItems.length; i++) {
         if (i % 4 === 0) {
             currentRow = $('<div class="row row-cols-1 row-cols-md-4">');
             containerItems.append(currentRow);
@@ -92,9 +92,9 @@ function showItems(items, albumID) {
 }
 
 function showAlbum(albums) {
-    let params = new URLSearchParams(location.search);
-    let id = params.get('id');
-    let album = albums.find(function (elem) {return elem.id == id});
+    var params = new URLSearchParams(location.search);
+    var id = params.get('id');
+    var album = albums.find(function (elem) {return elem.id == id});
     $('#carouselModalLabel').text(`${album.titulo}`);
     if (album) {
         const albumTitle = $('.album-title');
@@ -122,44 +122,33 @@ function showAlbum(albums) {
 }
 
 function showDestaques(destaques) {
-    console.log(destaques);
-    fetch(apiURLFotos, {
+    fetch(apiURLAlbums, {
         method: 'GET',
         headers: { 'Content-Type': 'application/JSON' }
       })
         .then(res => res.json())
         .then(data => {
-            let fotos = data;
-            let carousel = $('.carousel-destaques');
-            let albumID;
-            let fotoDescription;
-            let filteredFotos = [];
+            var carousel = $('.carousel-destaques');
+            var imagem;
 
-            for (let i = 0; i < destaques.length; i++) {
-                albumID = destaques[i].album;
-                fotoDescription = destaques[i].descricao;
-                filteredFotos = fotos.filter(item => item.album == albumID);
-                console.log(filteredFotos);
-                for (let c = 0; c < filteredFotos.length; c++) {
-                    if (i == 0 && c == 0) {
+            for (var i = 0; i < destaques.length; i++) {
+                imagem = data.find(function (elem) {return elem.id == destaques[i].album}).imagem;
+                    if (i == 0) {
                         $(`<div class="carousel-item active">
-                        <img src="${filteredFotos[i].url}" class="w-100 m-auto" alt="${filteredFotos[i].titulo}">
+                        <img src="${imagem}" class="w-100 m-auto" alt="${destaques[i].descricao}">
                         <div class="carousel-caption d-none d-md-block bg-dark opacity-75">
-                            ${destaques[i].descricao}
+                            <a href="album.html?id=${destaques[i].album}">${destaques[i].descricao}</a>
                         </div>
                     </div>`).appendTo(carousel);
-                        console.log(carousel.html() + "Legal");
                     }
                     else {
                         $(`<div class="carousel-item">
-                        <img src="${filteredFotos[c].url}" class="w-100 m-auto" alt="${filteredFotos[c].titulo}">
+                        <img src="${imagem}" class="w-100 m-auto" alt="${destaques[i].descricao}">
                         <div class="carousel-caption d-none d-md-block bg-dark opacity-75">
-                            ${destaques[i].descricao}
+                            <a href="album.html?id=${destaques[i].album}">${destaques[i].descricao}</a>
                         </div>
                     </div>`).appendTo(carousel);
-                    console.log(carousel.html() + "Deslegal");
                     }
-                }
             }
         })
         .catch(error => {
@@ -196,8 +185,8 @@ $(document).ready(function () {
     })
         .then(res => res.json())
         .then(data => {
-            let params = new URLSearchParams(location.search);
-            let id = params.get('id');
+            var params = new URLSearchParams(location.search);
+            var id = params.get('id');
             for (const dest of data) {
                 if (dest.album == id) {
                     checkbox.prop('checked', true);
@@ -212,8 +201,8 @@ $(document).ready(function () {
     checkbox.change(function () {
         if (this.checked) {
             
-            let params = new URLSearchParams(location.search);
-            let id = params.get('id');
+            var params = new URLSearchParams(location.search);
+            var id = params.get('id');
 
             label.html('<img src="assets/img/heart-full.png" class="heart-img">');
             fetch(apiURLDestaques, {
@@ -228,11 +217,11 @@ $(document).ready(function () {
             
             
         } else {
-            let destaques;
+            var destaques;
             label.html('<img src="assets/img/heart.png" class="heart-img">');
 
-            let params = new URLSearchParams(location.search);
-            let id = params.get('id');
+            var params = new URLSearchParams(location.search);
+            var id = params.get('id');
 
             fetch(apiURLDestaques, {
                 method: 'GET',
@@ -244,7 +233,7 @@ $(document).ready(function () {
                 destaquesFiltrados = destaques.filter(destaque => destaque.album == id);
                 for (const destaque of destaquesFiltrados) {
                     fetch(`${apiURLDestaques}${destaque.id}`, {
-                        method: 'DELETE',
+                        method: 'DEvarE',
                     })
                     .catch(error => console.error(error));
                 }
