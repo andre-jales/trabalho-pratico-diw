@@ -1,6 +1,5 @@
-const apiURLAlbums = "https://json-server-diw.andrejales1.repl.co/albuns/";
-const apiURLFotos = "https://json-server-diw.andrejales1.repl.co/fotos/";
-const apiURLDestaques = "https://json-server-diw.andrejales1.repl.co/destaques/";
+const apiURLAlbums = "https://json-server-web-tp-diw.andrejales1.repl.co/albuns";
+const apiURLFotos = "https://json-server-web-tp-diw.andrejales1.repl.co/fotos";
 const checkbox = $('#myHeart');
 const label = $('.heart-label');
 var map;
@@ -8,9 +7,9 @@ var albuns = [];
 
 function showAlbums(albums) {
     albuns = albums;
-    var containerAlbums = $("#container-albums");
-    var currentRow;
-    for (var i = 0; i < albums.length; i++) {
+    let containerAlbums = $("#container-albums");
+    let currentRow;
+    for (let i = 0; i < albums.length; i++) {
         if (i % 4 === 0) {
             currentRow = $('<div class="row row-cols-1 row-cols-md-4">');
             containerAlbums.append(currentRow);
@@ -30,24 +29,26 @@ function showAlbums(albums) {
                 </div>
             </div>
         </div>`).appendTo(currentRow);
+    }
+}
 
-        if ($('#map').length)
-        {
-            var coordenadas = albums[i].localizacao.split(',').map(coord => parseFloat(coord.trim()));
-            var marker = new mapboxgl.Marker()
-                .setLngLat([coordenadas[0], coordenadas[1]])
-                .setPopup(new mapboxgl.Popup().setHTML(`<p><a href="album.html?id=${albums[i].id}">${albums[i].titulo}</a></p>`))
-                .addTo(map);
-        }
+function showMarkers(albums) {
+    if ($('#map').length)
+    for (let i = 0; i < albums.length; i++) {
+        let coordenadas = albums[i].localizacao.split(',').map(coord => parseFloat(coord.trim()));
+        let marker = new mapboxgl.Marker()
+            .setLngLat([coordenadas[0], coordenadas[1]])
+            .setPopup(new mapboxgl.Popup().setHTML(`<p><a href="album.html?id=${albums[i].id}">${albums[i].titulo}</a></p>`))
+            .addTo(map);
     }
 }
 
 function showItems(items, albumID) {
-    var filteredItems = items.filter(item => item.album == albumID);
+    let filteredItems = items.filter(item => item.album == albumID);
     const containerItems = $('.container-items');
     const carouselInner = $('.carousel-inner');
-    var currentRow;
-    for (var i = 0; i < filteredItems.length; i++) {
+    let currentRow;
+    for (let i = 0; i < filteredItems.length; i++) {
         if (i % 4 === 0) {
             currentRow = $('<div class="row row-cols-1 row-cols-md-4">');
             containerItems.append(currentRow);
@@ -92,11 +93,46 @@ function showItems(items, albumID) {
 }
 
 function showAlbum(albums) {
-    var params = new URLSearchParams(location.search);
-    var id = params.get('id');
-    var album = albums.find(function (elem) {return elem.id == id});
+    let params = new URLSearchParams(location.search);
+    let id = params.get('id');
+    let album = albums.find(function (elem) {return elem.id == id});
     $('#carouselModalLabel').text(`${album.titulo}`);
     if (album) {
+        if (album.destaque) {
+            checkbox.prop('checked', true);
+            label.html('<i class="bi bi-heart-fill"></i>');
+        }
+        checkbox.change(function () {
+            if (this.checked) {
+                label.html('<i class="bi bi-heart-fill"></i>');
+                fetch(`${apiURLAlbums}/${id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ destaque: true }),
+                })
+                    .then(response => response.json())
+                    .catch(error => {
+                    console.error(error);
+                    });
+            }
+            else {
+                label.html('<i class="bi bi-heart"></i>');
+                fetch(`${apiURLAlbums}/${id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ destaque: false }),
+                })
+                    .then(response => response.json())
+                    .catch(error => {
+                    console.error(error);
+                    });
+            }
+                
+        });
         const albumTitle = $('.album-title');
         albumTitle.text(`Álbum ${album.titulo}`);
         const albumImage = $('.album-imagem');
@@ -121,40 +157,28 @@ function showAlbum(albums) {
     }
 }
 
-function showDestaques(destaques) {
-    fetch(apiURLAlbums, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/JSON' }
-      })
-        .then(res => res.json())
-        .then(data => {
-            var carousel = $('.carousel-destaques');
-            var imagem;
+function showDestaques(albums) {
+    let carousel = $('.carousel-destaques');
+    let featAlbums = albums.filter(album => album.destaque == true);
 
-            for (var i = 0; i < destaques.length; i++) {
-                imagem = data.find(function (elem) {return elem.id == destaques[i].album}).imagem;
-                    if (i == 0) {
-                        $(`<div class="carousel-item active">
-                        <img src="${imagem}" class="w-100 m-auto" alt="${destaques[i].descricao}">
-                        <div class="carousel-caption d-none d-md-block bg-dark opacity-75">
-                            <a href="album.html?id=${destaques[i].album}">${destaques[i].descricao}</a>
-                        </div>
-                    </div>`).appendTo(carousel);
-                    }
-                    else {
-                        $(`<div class="carousel-item">
-                        <img src="${imagem}" class="w-100 m-auto" alt="${destaques[i].descricao}">
-                        <div class="carousel-caption d-none d-md-block bg-dark opacity-75">
-                            <a href="album.html?id=${destaques[i].album}">${destaques[i].descricao}</a>
-                        </div>
-                    </div>`).appendTo(carousel);
-                    }
-            }
-        })
-        .catch(error => {
-          console.error(error)
-        });
-
+    for (let i = 0; i < featAlbums.length; i++) {
+        if (i == 0) {
+            $(`<div class="carousel-item active">
+            <img src="${featAlbums[i].imagem}" class="w-100 m-auto" alt="${featAlbums[i].descricaoCurta}">
+            <div class="carousel-caption d-none d-md-block bg-dark opacity-75">
+                <a href="album.html?id=${featAlbums[i].id}" class="text-light">${featAlbums[i].titulo}</a>
+            </div>
+        </div>`).appendTo(carousel);
+        }
+        else {
+            $(`<div class="carousel-item">
+            <img src="${featAlbums[i].imagem}" class="w-100 m-auto" alt="${featAlbums[i].descricaoCurta}">
+            <div class="carousel-caption d-none d-md-block bg-dark opacity-75">
+                <a href="album.html?id=${featAlbums[i].id}" class="text-light">${featAlbums[i].titulo}</a>
+            </div>
+        </div>`).appendTo(carousel);
+        }
+    }
 }
 
 $(document).ready(function () {
@@ -174,74 +198,9 @@ $(document).ready(function () {
         headers: { 'Content-Type': 'application/JSON' }
       })
         .then(res => res.json())
-        .then(data => {if($("#container-albums").length){showAlbums(data)} else if($('.album').length){showAlbum(data)}})
+        .then(data => {if($("#container-albums").length){showAlbums(data)} if($('.album').length){showAlbum(data)} if($('#map').length){showMarkers(data)} if($('.carousel-destaques').length){showDestaques(data)}})
         .catch(error => {
           console.error(error)
         });
-
-    fetch(apiURLDestaques, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/JSON' },
-    })
-        .then(res => res.json())
-        .then(data => {
-            var params = new URLSearchParams(location.search);
-            var id = params.get('id');
-            for (const dest of data) {
-                if (dest.album == id) {
-                    checkbox.prop('checked', true);
-                    label.html('<img src="assets/img/heart-full.png" class="heart-img">');
-                }
-            }
-            if($('.carousel-destaques').length){showDestaques(data)}})
-        .catch(error => {
-            console.error(error)
-        })
-
-    checkbox.change(function () {
-        if (this.checked) {
-            
-            var params = new URLSearchParams(location.search);
-            var id = params.get('id');
-
-            label.html('<img src="assets/img/heart-full.png" class="heart-img">');
-            fetch(apiURLDestaques, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/JSON' },
-                body: JSON.stringify({album: parseInt(id), descricao: `${$('.album-title').text()}`}),
-            })
-            .then(res => res.json())
-            .catch(error => {
-                console.error(error)
-            })
-            
-            
-        } else {
-            var destaques;
-            label.html('<img src="assets/img/heart.png" class="heart-img">');
-
-            var params = new URLSearchParams(location.search);
-            var id = params.get('id');
-
-            fetch(apiURLDestaques, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/JSON' },
-            })
-            .then(res => res.json())
-            .then(data => {
-                destaques = data;
-                destaquesFiltrados = destaques.filter(destaque => destaque.album == id);
-                for (const destaque of destaquesFiltrados) {
-                    fetch(`${apiURLDestaques}${destaque.id}`, {
-                        method: 'DEvarE',
-                    })
-                    .catch(error => console.error(error));
-                }
-            })
-            .catch(error => {
-                console.error(error)
-            })
-        }
-    });
 });
 
